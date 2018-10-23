@@ -1,3 +1,4 @@
+//
 function SelectHandler(el) {
 
     this.el = el;
@@ -7,30 +8,30 @@ function SelectHandler(el) {
 
     // helper list with position settings of each type of point
     this.pointsList = {
-      lt: [ 0, 0 ],
-      rt: [ 'width', 0 ],
-      rb: [ 'width', 'height' ],
-      lb: [ 0, 'height' ],
-      t: [ 'width', 0 ],
-      r: [ 'width', 'height' ],
-      b: [ 'width', 'height' ],
-      l: [ 0, 'height' ]
+        lt: [0, 0],
+        rt: ['width', 0],
+        rb: ['width', 'height'],
+        lb: [0, 'height'],
+        t: ['width', 0],
+        r: ['width', 'height'],
+        b: ['width', 'height'],
+        l: [0, 'height']
     };
 
     // helper function to get point coordinates based on settings above and an object (bbox in our case)
     this.pointCoord = function (setting, object, isPointCentered) {
-      var coord = typeof setting !== 'string' ? setting : object[setting];
-      // Top, bottom, right and left points are placed in the center of element width/height
-      return isPointCentered ? coord / 2 : coord
+        var coord = typeof setting !== 'string' ? setting : object[setting];
+        // Top, bottom, right and left points are placed in the center of element width/height
+        return isPointCentered ? coord / 2 : coord
     }
 
     this.pointCoords = function (point, object) {
-      var settings = this.pointsList[point];
+        var settings = this.pointsList[point];
 
-      return {
-        x: this.pointCoord(settings[0], object, (point === 't' || point === 'b')),
-        y: this.pointCoord(settings[1], object, (point === 'r' || point === 'l'))
-      }
+        return {
+            x: this.pointCoord(settings[0], object, (point === 't' || point === 'b')),
+            y: this.pointCoord(settings[1], object, (point === 'r' || point === 'l'))
+        }
     }
 }
 
@@ -54,44 +55,44 @@ SelectHandler.prototype.init = function (value, options) {
     var pointsLists = ['points', 'pointsExclude'];
 
     for (var i in pointsLists) {
-      var option = this.options[pointsLists[i]];
+        var option = this.options[pointsLists[i]];
 
-      if (typeof option === 'string') {
-        if (option.length > 0) {
-          // if set as comma separated string list => convert it into an array
-          option = option.split(/\s*,\s*/i);
-        } else {
-          option = [];
+        if (typeof option === 'string') {
+            if (option.length > 0) {
+                // if set as comma separated string list => convert it into an array
+                option = option.split(/\s*,\s*/i);
+            } else {
+                option = [];
+            }
+        } else if (typeof option === 'boolean' && pointsLists[i] === 'points') {
+            // this is not needed, but let's have it for legacy support
+            option = option ? points : [];
         }
-      } else if (typeof option === 'boolean' && pointsLists[i] === 'points') {
-        // this is not needed, but let's have it for legacy support
-        option = option ? points : [];
-      }
 
-      this.options[pointsLists[i]] = option;
+        this.options[pointsLists[i]] = option;
     }
 
     // intersect correct all points options with users config (exclude unwanted points)
     // ES5 -> NO arrow functions nor Array.includes()
-    this.options.points = [ points, this.options.points ].reduce(
-      function (a, b) {
-        return a.filter(
-          function (c) {
-            return b.indexOf(c) > -1;
-          }
-        )
-      }
+    this.options.points = [points, this.options.points].reduce(
+        function (a, b) {
+            return a.filter(
+                function (c) {
+                    return b.indexOf(c) > -1;
+                }
+            )
+        }
     );
 
     // exclude pointsExclude, if wanted
-    this.options.points = [ this.options.points, this.options.pointsExclude ].reduce(
-      function (a, b) {
-        return a.filter(
-          function (c) {
-            return b.indexOf(c) < 0;
-          }
-        )
-      }
+    this.options.points = [this.options.points, this.options.pointsExclude].reduce(
+        function (a, b) {
+            return a.filter(
+                function (c) {
+                    return b.indexOf(c) < 0;
+                }
+            )
+        }
     );
 
     this.parent = this.el.parent();
@@ -137,7 +138,7 @@ SelectHandler.prototype.getPointArray = function () {
     });
 };
 
-// Draws a points 
+// Draws a points
 SelectHandler.prototype.drawPoints = function () {
 
     var _this = this, array = this.getPointArray();
@@ -160,23 +161,54 @@ SelectHandler.prototype.drawPoints = function () {
         // add every point to the set
         // add css-classes and a touchstart-event which fires our event for moving points
         var point = this.drawPoint(array[i][0], array[i][1])
-                        .addClass(this.options.classPoints)
-                        .addClass(this.options.classPoints + '_point')
-                        .on('touchstart', curriedEvent)
-                        .on('mousedown', curriedEvent)
+            .addClass(this.options.classPoints)
+            .addClass(this.options.classPoints + '_point')
+            .on('touchstart', curriedEvent)
+            .on('mousedown', curriedEvent)
         this.pointSelection.set.add(point);
     }
 };
 
 // The function to draw single point
-SelectHandler.prototype.drawPoint = function (cx, cy) {
+SelectHandler.prototype.drawPoint = function (cx, cy, type) {
     var pointType = this.options.pointType;
+
+    switch (type) {
+        case 'lt':
+            cx -= this.options.pointAdjustment;
+            cy -= this.options.pointAdjustment;
+            break;
+        case 'rt':
+            cx += this.options.pointAdjustment;
+            cy -= this.options.pointAdjustment;
+            break;
+        case 'rb':
+            cx += this.options.pointAdjustment;
+            cy += this.options.pointAdjustment;
+            break;
+        case 'lb':
+            cx -= this.options.pointAdjustment;
+            cy += this.options.pointAdjustment;
+            break;
+        case 't':
+            cy -= this.options.pointAdjustment;
+            break;
+        case 'r':
+            cx += this.options.pointAdjustment;
+            break;
+        case 'b':
+            cy += this.options.pointAdjustment;
+            break
+        case 'l':
+            cx -= this.options.pointAdjustment;
+            break
+    }
 
     switch (pointType) {
         case 'circle':
-            return this.drawCircle(cx, cy);
+            return this.drawCircle(cx, cy, this.options.pointAdjustment);
         case 'rect':
-            return this.drawRect(cx, cy);
+            return this.drawRect(cx, cy, this.options.pointAdjustment);
         default:
             if (typeof pointType === 'function') {
                 return pointType.call(this, cx, cy);
@@ -187,15 +219,19 @@ SelectHandler.prototype.drawPoint = function (cx, cy) {
 };
 
 // The function to draw the circle point
-SelectHandler.prototype.drawCircle = function (cx, cy) {
-    return this.nested.circle(this.options.pointSize)
-                      .center(cx, cy);
+SelectHandler.prototype.drawCircle = function (cx, cy, gap) {
+    var circle = this.nested.circle(this.options.pointSize)
+        .center(cx, cy);
+    circle.node.gap = gap || 0;
+    return circle;
 };
 
 // The function to draw the rect point
-SelectHandler.prototype.drawRect = function (cx, cy) {
-    return this.nested.rect(this.options.pointSize, this.options.pointSize)
-                      .center(cx, cy);
+SelectHandler.prototype.drawRect = function (cx, cy, gap) {
+    var rect = this.nested.rect(this.options.pointSize, this.options.pointSize)
+        .center(cx, cy);
+    rect.node.gap = gap || 0;
+    return rect;
 };
 
 // every time a point is moved, we have to update the positions of our point
@@ -220,16 +256,44 @@ SelectHandler.prototype.updateRectSelection = function () {
 
     // set.get(1) is always in the upper left corner. no need to move it
     if (this.options.points.length) {
-      this.options.points.map(function (point, index) {
-        var coords = _this.pointCoords(point, bbox);
-
-        _this.rectSelection.set.get(index + 1).center(coords.x, coords.y);
-      });
+        this.options.points.map(function (point, index) {
+            var coords = _this.pointCoords(point, bbox);
+            var element = _this.rectSelection.set.get(index + 1);
+            switch (point) {
+                case 'lt':
+                    element.center(coords.x - element.node.gap, coords.y - element.node.gap);
+                    break;
+                case 'rt':
+                    element.center(coords.x + element.node.gap, coords.y - element.node.gap);
+                    break;
+                case 'rb':
+                    element.center(coords.x + element.node.gap, coords.y + element.node.gap);
+                    break;
+                case 'lb':
+                    element.center(coords.x - element.node.gap, coords.y + element.node.gap);
+                    break;
+                case 't':
+                    element.center(coords.x, coords.y - element.node.gap);
+                    break;
+                case 'r':
+                    element.center(coords.x + element.node.gap, coords.y);
+                    break;
+                case 'b':
+                    element.center(coords.x, coords.y + element.node.gap);
+                    break;
+                case 'l':
+                    element.center(coords.x - element.node.gap, coords.y);
+                    break;
+                default:
+                    element.center(coords.x, coords.y);
+                    break;
+            }
+        });
     }
 
     if (this.options.rotationPoint) {
         var length = this.rectSelection.set.length();
-        
+
         this.rectSelection.set.get(length - 1).center(bbox.width / 2, 20);
     }
 };
@@ -263,15 +327,15 @@ SelectHandler.prototype.selectRect = function (value) {
 
     // Draw Points at the edges, if enabled
     if (this.options.points.length && this.rectSelection.set.length() < 2) {
-        var ename ="touchstart", mname = "mousedown";
+        var ename = "touchstart", mname = "mousedown";
 
         this.options.points.map(function (point, index) {
             var coords = _this.pointCoords(point, bbox);
 
-            var pointElement = _this.drawPoint(coords.x, coords.y)
-                                    .attr('class', _this.options.classPoints + '_' + point)
-                                    .on(mname, getMoseDownFunc(point))
-                                    .on(ename, getMoseDownFunc(point));
+            var pointElement = _this.drawPoint(coords.x, coords.y, point)
+                .attr('class', _this.options.classPoints + '_' + point)
+                .on(mname, getMoseDownFunc(point))
+                .on(ename, getMoseDownFunc(point));
             _this.rectSelection.set.add(pointElement);
         });
 
@@ -293,10 +357,10 @@ SelectHandler.prototype.selectRect = function (value) {
             _this.el.fire('rot', {x: x, y: y, event: ev});
         };
 
-        var pointElement = this.drawPoint(bbox.width / 2, 20)
-                              .attr('class', this.options.classPoints + '_rot')
-                              .on("touchstart", curriedEvent)
-                              .on("mousedown", curriedEvent);
+        var pointElement = this.drawPoint(bbox.width / 2, 20, 'rot')
+            .attr('class', this.options.classPoints + '_rot')
+            .on("touchstart", curriedEvent)
+            .on("mousedown", curriedEvent);
         this.rectSelection.set.add(pointElement);
     }
 
@@ -403,5 +467,6 @@ SVG.Element.prototype.selectize.defaults = {
     pointSize: 7,                            // size of point
     rotationPoint: true,                     // If true, rotation point is drawn. Needed for rotation!
     deepSelect: false,                       // If true, moving of single points is possible (only line, polyline, polyon)
-    pointType: 'circle'                      // Point type: circle or rect, default circle
+    pointType: 'circle',                     // Point type: circle or rect, default circle
+    pointAdjustment: 0                       // Adjust position of point
 };
