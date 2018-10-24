@@ -1,4 +1,3 @@
-//
 function SelectHandler(el) {
 
     this.el = el;
